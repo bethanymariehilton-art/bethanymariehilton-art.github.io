@@ -5,11 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>B.E.C.C.A. Labs</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Share+Tech+Mono&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Share+Tech+Mono&display=swap');
 
-  * {
-    box-sizing: border-box;
-  }
+  * { box-sizing: border-box; }
   body {
     margin: 0;
     height: 100vh;
@@ -24,44 +22,37 @@
   }
   h1 {
     font-family: 'Orbitron', sans-serif;
-    font-size: 2.4em;
-    letter-spacing: 6px;
+    font-size: 3.8em; /* bigger */
+    letter-spacing: 8px;
     text-transform: uppercase;
-    text-shadow: 0 0 8px #FF2AD4, 0 0 16px #FF2AD4;
+    text-shadow: 0 0 10px #FF2AD4, 0 0 25px #FF2AD4;
     animation: pulse 2s infinite ease-in-out;
   }
   p {
-    font-size: 0.95em;
-    color: #bbb;
+    font-size: 1.3em; /* scaled up */
+    color: #ccc;
     letter-spacing: 3px;
-    margin-top: 10px;
-    opacity: 0.8;
+    margin-top: 12px;
+    opacity: 0.9;
   }
   @keyframes pulse {
-    0% { text-shadow: 0 0 8px #FF2AD4, 0 0 16px #FF2AD4; opacity: 0.7; }
-    50% { text-shadow: 0 0 24px #FF2AD4, 0 0 48px #FF2AD4; opacity: 1; }
-    100% { text-shadow: 0 0 8px #FF2AD4, 0 0 16px #FF2AD4; opacity: 0.7; }
+    0%,100% { text-shadow: 0 0 10px #FF2AD4, 0 0 25px #FF2AD4; opacity: 0.75; }
+    50% { text-shadow: 0 0 35px #FF2AD4, 0 0 60px #FF2AD4; opacity: 1; }
   }
   canvas {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     z-index: -1;
-    filter: blur(1px);
   }
   footer {
     position: absolute;
     bottom: 20px;
-    font-size: 0.8em;
+    font-size: 0.9em;
     color: #666;
     letter-spacing: 1px;
   }
-  footer a {
-    color: #FF2AD4;
-    text-decoration: none;
-  }
+  footer a { color: #FF2AD4; text-decoration: none; }
 </style>
 </head>
 <body>
@@ -78,30 +69,61 @@
 
     const letters = "01AI☠▌█▓░▄█▀>∆∑∇⌬⍯⧈".split("");
     const fontSize = 14;
-    const columns = canvas.width / fontSize;
-    const drops = Array(Math.floor(columns)).fill(1);
+    const columns = Math.floor(canvas.width / fontSize);
+    const drops = Array(columns).fill(1);
 
-    function draw() {
+    // Eye mask: draw invisible eyes and check if rain passes through them
+    const eyeCanvas = document.createElement('canvas');
+    eyeCanvas.width = canvas.width;
+    eyeCanvas.height = canvas.height;
+    const eyeCtx = eyeCanvas.getContext('2d');
+
+    // Draw faint "eyes" mask in center region
+    function drawEyes() {
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const eyeWidth = 260;
+      const eyeHeight = 90;
+
+      eyeCtx.clearRect(0,0,eyeCanvas.width,eyeCanvas.height);
+      eyeCtx.beginPath();
+      eyeCtx.ellipse(cx - eyeWidth/2 - 60, cy, 90, eyeHeight/2, 0, 0, Math.PI * 2);
+      eyeCtx.ellipse(cx + eyeWidth/2 + 60, cy, 90, eyeHeight/2, 0, 0, Math.PI * 2);
+      eyeCtx.fillStyle = "#fff";
+      eyeCtx.fill();
+    }
+    drawEyes();
+    const eyeData = eyeCtx.getImageData(0,0,eyeCanvas.width,eyeCanvas.height).data;
+
+    function drawMatrix() {
       ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
       ctx.fillStyle = "#FF2AD4";
       ctx.font = fontSize + "px monospace";
 
       for (let i = 0; i < drops.length; i++) {
-        const text = letters[Math.floor(Math.random() * letters.length)];
-        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975)
-          drops[i] = 0;
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+        const idx = ((Math.floor(y) * eyeCanvas.width) + Math.floor(x)) * 4;
+        const hitEye = eyeData[idx] > 0; // check mask pixel brightness
+        if (!hitEye) {
+          const text = letters[Math.floor(Math.random() * letters.length)];
+          ctx.fillText(text, x, y);
+        }
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
         drops[i]++;
       }
     }
-    setInterval(draw, 35);
+
+    setInterval(drawMatrix, 35);
     window.addEventListener('resize', () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      eyeCanvas.width = canvas.width;
+      eyeCanvas.height = canvas.height;
+      drawEyes();
     });
   </script>
 </body>
 </html>
+
